@@ -1,0 +1,10 @@
+reinstall python with pip first
+
+
+rewatch richard schwabe videos after
+
+
+discord.py[voice]
+python-dotenv
+instaloader
+etc
