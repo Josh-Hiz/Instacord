@@ -57,9 +57,13 @@ def run():
         brief = "Starts post checker"
     )
     @has_permissions(ban_members=True)
-    async def start_postchecker(ctx):
+    async def start_postchecker(ctx, username, channel_id: int, role_id: int):
         if not post_check_task.is_running():
-            post_check_task.start()
+
+            ### FIX
+            ### MAKE GLOBALS
+
+            post_check_task(ctx, username, channel_id, role_id).start()
             logger.info("Starting post checker task.")
             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
         else:
@@ -396,10 +400,10 @@ def run():
             await logger.error(f"An error occurred: {e}\n")
 
     @tasks.loop(minutes=20)
-    async def post_check_task():
+    async def post_check_task(ctx, username, channel_id: int, role_id: int):
         logger.info("Beginning post_check call")
         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-        await post_check(username='trolls_official')  # Replace 'username' with the actual username
+        await post_check_downloadv(ctx, username, channel_id, role_id) 
 
     @post_check_task.before_loop
     async def before_post_check_task():
@@ -564,7 +568,12 @@ def run():
     
 
 
-    async def post_check_downloadv(username):
+    async def post_check_downloadv(ctx, username, channel_id: int, role_id: int):
+
+        picDownload, picDownload2 = False, False
+
+        #profile_pic_path 
+        #post_image_path
 
         global last_post
         global last_post_author
@@ -572,6 +581,8 @@ def run():
         last_post_author = username
 
         private_server_target_channel = bot.get_channel(385829067225825282)
+
+        target_channel = bot.get_channel(channel_id)
 
         L = instaloader.Instaloader()
 
@@ -611,10 +622,11 @@ def run():
                         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
 
                         files = os.listdir()
-                        if profile_pic_path in files:
+                        if profile_pic_path and profile_pic_path in files:
                             os.remove(profile_pic_path)
-                        if post_image_path in files:
-                            os.remove(post_image_path)
+                        # if post_image_path and post_image_path in files:
+                        #     os.remove(post_image_path)
+                        picDownload = False
 
                         return
                     # new post
@@ -675,17 +687,22 @@ def run():
                         guild = bot.get_guild(private_server_id)
                         if guild:
                             role = guild.get_role(private_server_target_role_id)
-                            await private_server_target_channel.send(f" {role.mention} New post on {fullname}'s Instagram!", embed=e)
+                            await private_server_target_channel.send(f" {role.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
                         #role = discord.utils.get(ctx.guild.roles, name='Discord Manager')
+
+                        role2 = discord.utils.get(ctx.guild.roles, id=role_id)
+
+                        await target_channel.send(f" {role2.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
                         
                         #await channel.send(embed=e)
                         #await ctx.send(embed=e)
 
                         files = os.listdir()
-                        if profile_pic_path in files:
+                        if profile_pic_path and profile_pic_path in files:
                             os.remove(profile_pic_path)
-                        if post_image_path in files:
+                        if post_image_path and post_image_path in files:
                             os.remove(post_image_path)
+                        picDownload, picDownload2 = False, False
 
                         return
                     else:
@@ -693,17 +710,32 @@ def run():
                         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
 
                         files = os.listdir()
-                        if profile_pic_path in files:
+                        if profile_pic_path and profile_pic_path in files:
                             os.remove(profile_pic_path)
-                        if post_image_path in files:
-                            os.remove(post_image_path)
+                        # if post_image_path and post_image_path in files:
+                        #     os.remove(post_image_path)
+                        picDownload = False
                         return
 
-            #await private_server_target_channel.send(f"No unpinned posts found for {username}.")
-            await logger.info(f"No unpinned posts found for {username}.\n")
+            files = os.listdir()
+            if picDownload and profile_pic_path in files:
+                os.remove(profile_pic_path)
+            if picDownload2 and post_image_path in files:
+                os.remove(post_image_path)
+
+            logger.info(f"No unpinned posts found for {username}.")
+            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+            await ctx.send(f"No unpinned posts found for {username}.")
         except Exception as e:
-            #await private_server_target_channel.send(f"An error occurred: {e}")
-            await logger.error(f"An error occurred: {e}\n")
+            files = os.listdir()
+            if picDownload and profile_pic_path in files:
+                os.remove(profile_pic_path)
+            if picDownload2 and post_image_path in files:
+                os.remove(post_image_path)
+
+            logger.error(f"An error occurred: {e}")
+            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+            await ctx.send(f"An error occurred: {e}")
 
 
 
