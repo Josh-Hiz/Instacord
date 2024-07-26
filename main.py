@@ -21,6 +21,13 @@ last_post_author = None
 private_server_id = 385825313323483146
 private_server_target_role_id = 385826570377625601
 
+
+global_ctx = None
+global_username = None
+global_channel_id = None
+global_role_id = None
+
+
 class RoleNotFound(Exception):
     pass
 
@@ -62,8 +69,17 @@ def run():
 
             ### FIX
             ### MAKE GLOBALS
+            global global_ctx 
+            global global_username 
+            global global_channel_id 
+            global global_role_id
 
-            post_check_task(ctx, username, channel_id, role_id).start()
+            global_ctx = ctx
+            global_username = username
+            global_channel_id = channel_id
+            global_role_id = role_id
+
+            post_check_task.start()
             logger.info("Starting post checker task.")
             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
         else:
@@ -400,10 +416,10 @@ def run():
             await logger.error(f"An error occurred: {e}\n")
 
     @tasks.loop(minutes=20)
-    async def post_check_task(ctx, username, channel_id: int, role_id: int):
+    async def post_check_task():
         logger.info("Beginning post_check call")
         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-        await post_check_downloadv(ctx, username, channel_id, role_id) 
+        await post_check_downloadv() 
 
     @post_check_task.before_loop
     async def before_post_check_task():
@@ -568,7 +584,12 @@ def run():
     
 
 
-    async def post_check_downloadv(ctx, username, channel_id: int, role_id: int):
+    async def post_check_downloadv():
+
+        global global_ctx 
+        global global_username 
+        global global_channel_id 
+        global global_role_id
 
         picDownload, picDownload2 = False, False
 
@@ -578,20 +599,20 @@ def run():
         global last_post
         global last_post_author
 
-        last_post_author = username
+        last_post_author = global_username
 
         private_server_target_channel = bot.get_channel(385829067225825282)
 
-        target_channel = bot.get_channel(channel_id)
+        target_channel = bot.get_channel(global_channel_id)
 
         L = instaloader.Instaloader()
 
         try:
-            profile = instaloader.Profile.from_username(L.context, username)
+            profile = instaloader.Profile.from_username(L.context, global_username)
 
             profile_pic_url = profile.profile_pic_url
             fullname = profile.full_name
-            profile_pic_path = f"{username}_profile_pic_loop"
+            profile_pic_path = f"{global_username}_profile_pic_loop"
 
 
             picDownload = L.download_pic(profile_pic_path, profile_pic_url, datetime.now())
@@ -649,7 +670,7 @@ def run():
                             top_image_url = post.url
 
                         
-                        post_image_path = f"{username}_post_image_loop"
+                        post_image_path = f"{global_username}_post_image_loop"
                         picDownload2 = L.download_pic(post_image_path, top_image_url, datetime.now())
                         print("\n")
                         if picDownload2 == False:
@@ -678,7 +699,7 @@ def run():
 
                         e.set_image(url="attachment://" + post_image_path)
                         e.set_footer(text=f"❤️ {likes} | 💬 {comments}")
-                        e.set_author(name=username, icon_url = "attachment://" + profile_pic_path, url="https://www.instagram.com/" + username)
+                        e.set_author(name=global_username, icon_url = "attachment://" + profile_pic_path, url="https://www.instagram.com/" + global_username)
 
 
                         # get channel next
@@ -690,7 +711,7 @@ def run():
                             await private_server_target_channel.send(f" {role.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
                         #role = discord.utils.get(ctx.guild.roles, name='Discord Manager')
 
-                        role2 = discord.utils.get(ctx.guild.roles, id=role_id)
+                        role2 = discord.utils.get(global_ctx.guild.roles, id=global_role_id)
 
                         await target_channel.send(f" {role2.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
                         
@@ -723,9 +744,9 @@ def run():
             if picDownload2 and post_image_path in files:
                 os.remove(post_image_path)
 
-            logger.info(f"No unpinned posts found for {username}.")
+            logger.info(f"No unpinned posts found for {global_username}.")
             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-            await ctx.send(f"No unpinned posts found for {username}.")
+            await global_ctx.send(f"No unpinned posts found for {global_username}.")
         except Exception as e:
             files = os.listdir()
             if picDownload and profile_pic_path in files:
@@ -735,7 +756,7 @@ def run():
 
             logger.error(f"An error occurred: {e}")
             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-            await ctx.send(f"An error occurred: {e}")
+            await global_ctx.send(f"An error occurred: {e}")
 
 
 
