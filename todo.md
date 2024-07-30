@@ -1,3 +1,5 @@
+make helper functions in both files non async
+
 - ADAPT POST CHECKER FOR DOWNLOAD METHOD
   - TEST that it works first (images not working)
 - ADAPT POST CHECKER TO USE CONTEXT FROM START_POSTCHECKER COMMAND
