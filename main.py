@@ -8,6 +8,7 @@ from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions
 from datetime import datetime
 import post_data_D, post_data_ND
+from pretty_help import PrettyHelp, EmojiMenu
 
 #from instagrapi import Client
 
@@ -40,6 +41,8 @@ def run():
     intents.members = True
 
     bot = commands.Bot(command_prefix="]", intents=intents)
+    menu = EmojiMenu(page_left='◀️', page_right='▶️', remove='❌')
+    bot.help_command = PrettyHelp(navigation=menu, color=discord.Colour.orange(), no_category="All Commands") 
 
     @bot.event
     async def on_ready():
@@ -206,7 +209,7 @@ def run():
 
 
     @bot.command(
-        brief = "Prints the current last post of designated account"
+        brief = "Prints the current last post of designated account without downloading/deleting. Images within embeds are temporary."
     )
     @has_permissions(ban_members=True)
     async def lastpost_ND(ctx, username, channel_id: int, role_id:int, bot, logger):
@@ -448,7 +451,7 @@ def run():
     #     await interaction.response.send_message("pong")
             
     @bot.command(
-         brief = "Prints the current last post of designated account"
+         brief = "Prints the current last post of designated account with downloading/deleting. Images within embed are permanent."
     )
     @has_permissions(ban_members=True)
     async def lastpost_D(ctx, username, channel_id: int, role_id: int):

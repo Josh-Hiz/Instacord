@@ -1,4 +1,5 @@
-make helper functions in both files non async
+discord-pretty-help (fix help command)
+
 
 - ADAPT POST CHECKER FOR DOWNLOAD METHOD
   - TEST that it works first (images not working)
@@ -7,4 +8,4 @@ make helper functions in both files non async
 - CREATE FUNCTION JUST FOR PRINTING A GIVEN POST
   - IN THE MAIN LASTPOST/POSTCHECK FUNCTION, GET A LIST OF ALL NEW POSTS
   - THEN LOOP THROUGH EACH POST, AND FOR EACH POST CALL THE PRINT FUNCTION
-- ADD FOR *STORIES*
+- ADD FOR *STORIES* and *THREADS*
