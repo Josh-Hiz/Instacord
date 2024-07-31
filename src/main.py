@@ -1,13 +1,13 @@
 import os
-import aiohttp
+import asyncio
 import instaloader
-import settings
+import src.settings as settings
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions
 from datetime import datetime
-import post_data_D, post_data_ND
+import src.post_data_D as post_data_D, src.post_data_ND as post_data_ND
 from pretty_help import PrettyHelp, EmojiMenu
 
 #from instagrapi import Client
@@ -25,10 +25,10 @@ private_server_id = 385825313323483146
 private_server_target_role_id = 385826570377625601
 
 
-global_ctx = None
-global_username = None
-global_channel_id = None
-global_role_id = None
+# global_ctx = None
+# global_username = None
+# global_channel_id = None
+# global_role_id = None
 
 
 class RoleNotFound(Exception):
@@ -74,17 +74,24 @@ def run():
 
             ### FIX
             ### MAKE GLOBALS
-            global global_ctx 
-            global global_username 
-            global global_channel_id 
-            global global_role_id
+            # global global_ctx 
+            # global global_username 
+            # global global_channel_id 
+            # global global_role_id
 
-            global_ctx = ctx
-            global_username = username
-            global_channel_id = channel_id
-            global_role_id = role_id
+            # global_ctx = ctx
+            # global_username = username
+            # global_channel_id = channel_id
+            # global_role_id = role_id
 
+            post_check_task.ctx = ctx
+            post_check_task.username = username
+            post_check_task.channel_id = channel_id
+            post_check_task.role_id = role_id
             post_check_task.start()
+
+            #post_check_task.start()
+            #asyncio.create_task(post_check_task(ctx, username, channel_id, role_id))
             logger.info("Starting post checker task.")
             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
         else:
@@ -118,6 +125,51 @@ def run():
         else:
             logger.info("Cannot stop post checker task. Post checker task is not running.")
             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+
+
+    @tasks.loop(minutes=20)
+    async def post_check_task():
+
+        #global last_post, last_post_author, global_ctx, global_username, global_channel_id, global_role_id
+        global last_post, last_post_author
+
+        ctx = post_check_task.ctx
+        username = post_check_task.username
+        channel_id = post_check_task.channel_id
+        role_id = post_check_task.role_id
+
+        logger.info("Beginning post_check call")
+        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+        #await post_data_D.post_check_downloadv(bot, logger, last_post, last_post_author, global_ctx, global_username, global_channel_id, global_role_id) 
+        await post_data_D.post_check_downloadv(bot, logger, last_post, last_post_author, ctx, username, channel_id, role_id) 
+
+
+    @post_check_task.before_loop
+    async def before_post_check_task():
+        logger.info("Waiting until bot is ready to begin post_check loop")
+        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+        await bot.wait_until_ready()
+
+    
+    @bot.command(
+        brief = "Prints the current last post of designated account without downloading/deleting. Images within embeds are temporary."
+    )
+    @has_permissions(ban_members=True)
+    async def lastpost_ND(ctx, username, channel_id: int, role_id:int, bot, logger):
+        global last_post_author, last_post
+
+        last_post = await post_data_ND.lastpost(ctx, username, channel_id, role_id, bot, logger, last_post, last_post_author)
+
+
+
+    @bot.command(
+         brief = "Prints the current last post of designated account with downloading/deleting. Images within embed are permanent."
+    )
+    @has_permissions(ban_members=True)
+    async def lastpost_D(ctx, username, channel_id: int, role_id: int):
+        global last_post_author, last_post
+        
+        last_post = await post_data_D.lastpost_downloadv(bot, logger, last_post, last_post_author, ctx, username, channel_id, role_id)
 
 
 
@@ -208,14 +260,7 @@ def run():
 
 
 
-    @bot.command(
-        brief = "Prints the current last post of designated account without downloading/deleting. Images within embeds are temporary."
-    )
-    @has_permissions(ban_members=True)
-    async def lastpost_ND(ctx, username, channel_id: int, role_id:int, bot, logger):
-        global last_post_author, last_post
-
-        last_post = await post_data_ND.lastpost(ctx, username, channel_id, role_id, bot, logger, last_post, last_post_author)
+    
         
 
     # # if the post checker is running, stops it, prints the last post at the current moment (regardless if it has been previously posted).
@@ -430,34 +475,14 @@ def run():
     #         #await private_server_target_channel.send(f"An error occurred: {e}")
     #         await logger.error(f"An error occurred: {e}\n")
 
-    @tasks.loop(minutes=20)
-    async def post_check_task():
-
-        global last_post, last_post_author, global_ctx, global_username, global_channel_id, global_role_id
-
-        logger.info("Beginning post_check call")
-        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-        await post_data_D.post_check_downloadv(bot, logger, last_post, last_post_author, global_ctx, global_username, global_channel_id, global_role_id) 
-
-    @post_check_task.before_loop
-    async def before_post_check_task():
-        logger.info("Waiting until bot is ready to begin post_check loop")
-        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-        await bot.wait_until_ready()
+    
 
     # @tree.command(name="testslash", description="A simple ping command")
     # async def slash_ping(interaction: discord.Interaction):
     #     """ Answers with pong. """
     #     await interaction.response.send_message("pong")
             
-    @bot.command(
-         brief = "Prints the current last post of designated account with downloading/deleting. Images within embed are permanent."
-    )
-    @has_permissions(ban_members=True)
-    async def lastpost_D(ctx, username, channel_id: int, role_id: int):
-        global last_post_author, last_post
-        
-        last_post = await post_data_D.lastpost_downloadv(bot, logger, last_post, last_post_author, ctx, username, channel_id, role_id)
+    
 
 
 
