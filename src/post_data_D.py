@@ -15,7 +15,7 @@ private_server_id = 385825313323483146
 private_server_target_role_id = 385826570377625601
 
 
-async def lastpost_downloadv(bot, logger, last_post, last_post_author, ctx, username, channel_id: int, role_id: int):
+async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_id: int, post_checkers):
 
     target_channel = bot.get_channel(channel_id)
 
@@ -55,11 +55,17 @@ async def lastpost_downloadv(bot, logger, last_post, last_post_author, ctx, user
                 likes = post.likes
                 date = post.date
 
+                temp_key = (ctx.guild.id, username, channel_id)
 
-                if username == last_post_author:
-                    last_post = date
+                if temp_key in post_checkers:
+                    post_checkers[temp_key].last_post = date 
                     logger.info("lastpost called on same author as post checker, adjusting last_post value")
                     logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+
+                # if username == last_post_author:
+                #     last_post = date
+                #     logger.info("lastpost called on same author as post checker, adjusting last_post value")
+                #     logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
 
 
                 if post.typename == "GraphSidecar":
@@ -119,7 +125,7 @@ async def lastpost_downloadv(bot, logger, last_post, last_post_author, ctx, user
                 if post_image_path in files:
                     os.remove(post_image_path)
 
-                return last_post
+                return post_checkers
 
 
         files = os.listdir()
@@ -132,7 +138,7 @@ async def lastpost_downloadv(bot, logger, last_post, last_post_author, ctx, user
         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
         await ctx.send(f"No unpinned posts found for {username}.")
 
-        return last_post
+        return post_checkers
 
     except Exception as e:
         files = os.listdir()
@@ -207,7 +213,7 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
                             os.remove(profile_pic_path)
                         picDownload = False
 
-                        return
+                        return last_post
                     # new post
                     elif last_post != post.date:
                         last_post = post.date
@@ -279,7 +285,7 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
                             os.remove(post_image_path)
                         picDownload, picDownload2 = False, False
 
-                        return
+                        return last_post
                     else:
                         logger.info("Most recent post is not new. No new posts found")
                         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
@@ -288,7 +294,7 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
                         if profile_pic_path and profile_pic_path in files:
                             os.remove(profile_pic_path)
                         picDownload = False
-                        return
+                        return last_post
 
             files = os.listdir()
             if picDownload and profile_pic_path in files:

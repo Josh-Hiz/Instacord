@@ -1,13 +1,13 @@
 import os
 import asyncio
 import instaloader
-import src.settings as settings
+import settings
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions
 from datetime import datetime
-import src.post_data_D as post_data_D, src.post_data_ND as post_data_ND
+import post_data_D, post_data_ND
 from pretty_help import PrettyHelp, EmojiMenu
 
 #from instagrapi import Client
@@ -18,11 +18,13 @@ logger = settings.logging.getLogger("bot")
 instaloader_logger = settings.logging.getLogger('instaloader')
 instaloader_logger.setLevel(settings.logging.WARNING)
 
-last_post = None
-last_post_author = None
+#last_post = None
+#last_post_author = None
 
 private_server_id = 385825313323483146
 private_server_target_role_id = 385826570377625601
+
+post_checkers = {}
 
 
 # global_ctx = None
@@ -43,6 +45,45 @@ def run():
     bot = commands.Bot(command_prefix="]", intents=intents)
     menu = EmojiMenu(page_left='◀️', page_right='▶️', remove='❌')
     bot.help_command = PrettyHelp(navigation=menu, color=discord.Colour.orange(), no_category="All Commands") 
+
+
+
+    class PostChecker:
+        def __init__(self, bot, ctx, username, channel_id, role_id):
+            self.bot = bot
+            self.ctx = ctx
+            self.username = username
+            self.channel_id = channel_id
+            self.role_id = role_id
+            self.last_post = None
+            self.last_post_author = username
+            self.start_time = ""+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" (EST)"
+            self.task = tasks.loop(minutes=20)(self.post_check_task)
+            self.task.before_loop(self.before_post_check_task)
+            self.task.start()
+            
+        async def post_check_task(self):
+            logger.info("Beginning post_check call")
+            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
+            self.last_post = await post_data_D.post_check_downloadv(self.bot, logger, self.last_post, self.last_post_author, self.ctx, self.username, self.channel_id, self.role_id)
+    
+        async def before_post_check_task(self):
+            logger.info("Waiting until bot is ready to begin post_check loop")
+            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
+            await self.bot.wait_until_ready()
+        
+        def cancel(self):
+            self.task.cancel()
+            logger.info("Canceling post checker task.")
+            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
+        
+        def stop(self):
+            self.task.stop()
+            logger.info("Stopping post checker task. Task will run for one more iteration before being paused.")
+            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
+
+
+
 
     @bot.event
     async def on_ready():
@@ -65,66 +106,93 @@ def run():
             await ctx.send(f"Error: {error}")
 
 
+    # @bot.command(
+    #     brief = "Starts post checker"
+    # )
+    # @has_permissions(ban_members=True)
+    # async def start_postchecker(ctx, username, channel_id: int, role_id: int):
+    #     if not post_check_task.is_running():
+
+    #         post_check_task.ctx = ctx
+    #         post_check_task.username = username
+    #         post_check_task.channel_id = channel_id
+    #         post_check_task.role_id = role_id
+    #         post_check_task.start()
+
+    #         #post_check_task.start()
+    #         #asyncio.create_task(post_check_task(ctx, username, channel_id, role_id))
+    #         logger.info("Starting post checker task.")
+    #         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+    #     else:
+    #         logger.info("Cannot start post checker task. Post checker task is already running.")
+    #         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+
     @bot.command(
-        brief = "Starts post checker"
+        brief="Starts post checker. Limit of 1 post checker in a channel per author"
     )
     @has_permissions(ban_members=True)
-    async def start_postchecker(ctx, username, channel_id: int, role_id: int):
-        if not post_check_task.is_running():
-
-            ### FIX
-            ### MAKE GLOBALS
-            # global global_ctx 
-            # global global_username 
-            # global global_channel_id 
-            # global global_role_id
-
-            # global_ctx = ctx
-            # global_username = username
-            # global_channel_id = channel_id
-            # global_role_id = role_id
-
-            post_check_task.ctx = ctx
-            post_check_task.username = username
-            post_check_task.channel_id = channel_id
-            post_check_task.role_id = role_id
-            post_check_task.start()
-
-            #post_check_task.start()
-            #asyncio.create_task(post_check_task(ctx, username, channel_id, role_id))
+    async def start_postchecker(ctx, username: str, channel_id: int, role_id: int):
+        key = (ctx.guild.id, username, channel_id)
+        if key not in post_checkers:
+            post_checkers[key] = PostChecker(bot, ctx, username, channel_id, role_id)
             logger.info("Starting post checker task.")
-            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
         else:
             logger.info("Cannot start post checker task. Post checker task is already running.")
-            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
 
+
+    # @bot.command(
+    #     brief = "Immediatedly cancels post checker"
+    # )
+    # @has_permissions(ban_members=True)
+    # async def cancel_postchecker(ctx):
+    #     if post_check_task.is_running():
+    #         post_check_task.cancel()
+    #         logger.info("Canceling post checker task.")
+    #         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+    #     else:
+    #         logger.info("Cannot cancel post checker task. Post checker task is not running.")
+    #         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
 
     @bot.command(
-        brief = "Immediatedly cancels post checker"
+        brief="Immediately cancels post checker"
     )
     @has_permissions(ban_members=True)
-    async def cancel_postchecker(ctx):
-        if post_check_task.is_running():
-            post_check_task.cancel()
-            logger.info("Canceling post checker task.")
-            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+    async def cancel_postchecker(ctx, username: str, channel_id: int):
+        key = (ctx.guild.id, username, channel_id)
+        if key in post_checkers:
+            post_checkers[key].cancel()
+            del post_checkers[key]
         else:
             logger.info("Cannot cancel post checker task. Post checker task is not running.")
-            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
 
+
+    # @bot.command(
+    #     brief = "Pauses post checker after the next iteration"
+    # )
+    # @has_permissions(ban_members=True)
+    # async def stop_postchecker(ctx):
+    #     if post_check_task.is_running():
+    #         post_check_task.stop()
+    #         logger.info("Stopping post checker task. Task will run for one more iteration before being pasued.")
+    #         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+    #     else:
+    #         logger.info("Cannot stop post checker task. Post checker task is not running.")
+    #         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
 
     @bot.command(
-        brief = "Pauses post checker after the next iteration"
+        brief="Pauses post checker after the next iteration"
     )
     @has_permissions(ban_members=True)
-    async def stop_postchecker(ctx):
-        if post_check_task.is_running():
-            post_check_task.stop()
-            logger.info("Stopping post checker task. Task will run for one more iteration before being pasued.")
-            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+    async def stop_postchecker(ctx, username: str, channel_id: int):
+        key = (ctx.guild.id, username, channel_id)
+        if key in post_checkers:
+            post_checkers[key].stop()
         else:
             logger.info("Cannot stop post checker task. Post checker task is not running.")
-            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
 
 
     @tasks.loop(minutes=20)
@@ -156,20 +224,35 @@ def run():
     )
     @has_permissions(ban_members=True)
     async def lastpost_ND(ctx, username, channel_id: int, role_id:int, bot, logger):
-        global last_post_author, last_post
+        #global last_post_author, last_post
 
         last_post = await post_data_ND.lastpost(ctx, username, channel_id, role_id, bot, logger, last_post, last_post_author)
 
 
 
     @bot.command(
-         brief = "Prints the current last post of designated account with downloading/deleting. Images within embed are permanent."
+        brief = "Prints the current last post of designated account with downloading/deleting. Images within embed are permanent. If the channel/author used match a current post checker, it will overwrite that post checker. There will be no double post."
     )
     @has_permissions(ban_members=True)
-    async def lastpost_D(ctx, username, channel_id: int, role_id: int):
-        global last_post_author, last_post
+    async def lastpost_D(ctx, username, channel_id: int, role_id: int, label: str):
+        #global last_post_author, last_post
         
-        last_post = await post_data_D.lastpost_downloadv(bot, logger, last_post, last_post_author, ctx, username, channel_id, role_id)
+        global post_checkers
+
+        post_checkers = await post_data_D.lastpost_downloadv(bot, logger, ctx, username, channel_id, role_id, post_checkers, label)
+
+    
+    @bot.command(brief="Lists all running post checkers")
+    @has_permissions(ban_members=True)
+    async def list_postcheckers(ctx):
+        if post_checkers:
+            message = "Current running post checkers:\n"
+            for key, checker in post_checkers.items():
+                guild_id, username, label = key
+                message += f"Guild: {guild_id}, Username: {username}, Channel ID: {checker.channel_id}, Role ID: {checker.role_id}, Label: {label}, Start Time: {checker.start_time}\n"
+            await ctx.send(message)
+        else:
+            await ctx.send("No post checkers are currently running.")
 
 
 
