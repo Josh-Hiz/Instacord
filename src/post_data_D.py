@@ -24,7 +24,7 @@ async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_i
     try:
         profile = instaloader.Profile.from_username(L.context, username)
 
-        profile_pic_path = f"{username}_profile_pic"
+        profile_pic_path = f"{username}_{channel_id}_profile_pic"
         file_extension = "jpg"
         profile_pic_url = profile.profile_pic_url
         fullname = profile.full_name
@@ -78,7 +78,7 @@ async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_i
                     top_image_url = post.url
 
 
-                post_image_path = f"{username}_post_image"
+                post_image_path = f"{username}_{channel_id}_post_image"
                 picDownload2 = L.download_pic(post_image_path, top_image_url, datetime.now())
                 if picDownload2 == False:
                     print("\n")
@@ -178,7 +178,7 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
 
             profile_pic_url = profile.profile_pic_url
             fullname = profile.full_name
-            profile_pic_path = f"{global_username}_profile_pic_loop"
+            profile_pic_path = f"{global_username}_{global_channel_id}_profile_pic_loop"
 
 
             picDownload = L.download_pic(profile_pic_path, profile_pic_url, datetime.now())
@@ -197,9 +197,9 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
                     profile_pic_path = file
                     break
 
-
+            post_list = profile.get_posts()
             
-            for post in profile.get_posts():
+            for post in post_list:
                 if not post.is_pinned:
 
                     # first iteration
@@ -234,7 +234,7 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
                             top_image_url = post.url
 
                         
-                        post_image_path = f"{global_username}_post_image_loop"
+                        post_image_path = f"{global_username}_{global_channel_id}_post_image_loop"
                         picDownload2 = L.download_pic(post_image_path, top_image_url, datetime.now())
                         print("\n")
                         if picDownload2 == False:
