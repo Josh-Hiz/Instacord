@@ -15,7 +15,7 @@ private_server_id = 385825313323483146
 private_server_target_role_id = 385826570377625601
 
 
-async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_id: int, post_checkers):
+async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_id: int, post_checkers, num_posts=1):
 
     target_channel = bot.get_channel(channel_id)
 
@@ -198,6 +198,7 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
                     break
 
             post_list = profile.get_posts()
+            posts_to_print = []
             
             for post in post_list:
                 if not post.is_pinned:
@@ -216,91 +217,47 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
                         return last_post
                     # new post
                     elif last_post != post.date:
-                        last_post = post.date
 
-                        post_url = f"https://www.instagram.com/p/{post.shortcode}/"
-                        caption = post.caption
-                        comments = post.comments
-                        likes = post.likes
-                        date = post.date
-
-                        if post.typename == "GraphSidecar":
-                            sidecar_nodes = list(post.get_sidecar_nodes())
-                            if sidecar_nodes:
-                                top_image_url = sidecar_nodes[0].display_url
-                            else:
-                                top_image_url = None
-                        else:
-                            top_image_url = post.url
-
-                        
-                        post_image_path = f"{global_username}_{global_channel_id}_post_image_loop"
-                        picDownload2 = L.download_pic(post_image_path, top_image_url, datetime.now())
-                        print("\n")
-                        if picDownload2 == False:
-                            logger.error("post_check: post image not downloaded")
-                            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-                            return
-                        else:
-                            logger.info("post_check: post image successfully downloaded")
-                            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-
-                        for file in os.listdir():
-                            if file.startswith(post_image_path):
-                                post_image_path = file
-                                break
-
-                        
-                        e = discord.Embed(
-                            title = f"New Instagram post published on {date}",
-                            description=caption,
-                            url=post_url,
-                            color=0x40E0D0,
-                        )
-
-                        print(f"Profile pic file: {profile_pic_path}")
-                        print(f"Post image file: {post_image_path} \n")
-
-                        e.set_image(url="attachment://" + post_image_path)
-                        e.set_footer(text=f"❤️ {likes} | 💬 {comments}")
-                        e.set_author(name=global_username, icon_url = "attachment://" + profile_pic_path, url="https://www.instagram.com/" + global_username)
+                        posts_to_print.append(post)
 
 
-                        # get channel next
-                        logger.info("New Post Found")
-                        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-                        guild = bot.get_guild(private_server_id)
-                        if guild:
-                            role = guild.get_role(private_server_target_role_id)
-                            await private_server_target_channel.send(f" {role.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
-
-                        role2 = discord.utils.get(global_ctx.guild.roles, id=global_role_id)
-
-                        await target_channel.send(f" {role2.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
-
-                        files = os.listdir()
-                        if profile_pic_path and profile_pic_path in files:
-                            os.remove(profile_pic_path)
-                        if post_image_path and post_image_path in files:
-                            os.remove(post_image_path)
-                        picDownload, picDownload2 = False, False
-
-                        return last_post
                     else:
-                        logger.info("Most recent post is not new. No new posts found")
-                        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
 
-                        files = os.listdir()
-                        if profile_pic_path and profile_pic_path in files:
-                            os.remove(profile_pic_path)
-                        picDownload = False
-                        return last_post
+                        if len(posts_to_print) == 0:
+                            logger.info("Most recent post is not new. No new posts found")
+                            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+
+                            files = os.listdir()
+                            if profile_pic_path and profile_pic_path in files:
+                                os.remove(profile_pic_path)
+                            picDownload = False
+                            return last_post
+                        
+                        else:
+                            logger.info(f"Found {len(posts_to_print)} new post(s)")
+                            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+
+                            last_post = posts_to_print[0].date
+
+                            for post in posts_to_print:
+                                await print_post(post, profile_pic_path, global_ctx, global_username, global_channel_id, global_role_id, logger, L, bot, fullname)
+
+                            files = os.listdir()
+                            if profile_pic_path and profile_pic_path in files:
+                                os.remove(profile_pic_path)
+                            picDownload = False
+
+                            return last_post
+
+
+
+                        
 
             files = os.listdir()
             if picDownload and profile_pic_path in files:
                 os.remove(profile_pic_path)
-            if picDownload2 and post_image_path in files:
-                os.remove(post_image_path)
+            #if picDownload2 and post_image_path in files:
+            #     os.remove(post_image_path)
 
             logger.info(f"No unpinned posts found for {global_username}.")
             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
@@ -309,9 +266,85 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
             files = os.listdir()
             if picDownload and profile_pic_path in files:
                 os.remove(profile_pic_path)
-            if picDownload2 and post_image_path in files:
-                os.remove(post_image_path)
+            # if picDownload2 and post_image_path in files:
+            #     os.remove(post_image_path)
 
             logger.error(f"An error occurred: {e}")
             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
             await global_ctx.send(f"An error occurred: {e}")
+
+
+
+async def print_post(post, profile_pic_path, global_ctx, global_username, global_channel_id, global_role_id, logger, L, bot, fullname):
+
+    picDownload2 = False
+
+    target_channel = bot.get_channel(global_channel_id)
+
+
+    post_url = f"https://www.instagram.com/p/{post.shortcode}/"
+    caption = post.caption
+    comments = post.comments
+    likes = post.likes
+    date = post.date
+    
+
+    if post.typename == "GraphSidecar":
+        sidecar_nodes = list(post.get_sidecar_nodes())
+        if sidecar_nodes:
+            top_image_url = sidecar_nodes[0].display_url
+        else:
+            top_image_url = None
+    else:
+        top_image_url = post.url
+
+    
+    post_image_path = f"{global_username}_{global_channel_id}_post_image_loop"
+    picDownload2 = L.download_pic(post_image_path, top_image_url, datetime.now())
+    print("\n")
+    if picDownload2 == False:
+        logger.error("print_post: post image not downloaded")
+        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+        return
+    else:
+        logger.info("print_post: post image successfully downloaded")
+        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+
+    for file in os.listdir():
+        if file.startswith(post_image_path):
+            post_image_path = file
+            break
+
+    
+    e = discord.Embed(
+        title = f"New Instagram post published on {date}",
+        description=caption,
+        url=post_url,
+        color=0x40E0D0,
+    )
+
+    print(f"Profile pic file: {profile_pic_path}")
+    print(f"Post image file: {post_image_path} \n")
+
+    e.set_image(url="attachment://" + post_image_path)
+    e.set_footer(text=f"❤️ {likes} | 💬 {comments}")
+    e.set_author(name=global_username, icon_url = "attachment://" + profile_pic_path, url="https://www.instagram.com/" + global_username)
+
+
+    # get channel next
+    
+
+    role2 = discord.utils.get(global_ctx.guild.roles, id=global_role_id)
+
+    await target_channel.send(f" {role2.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
+
+    logger.info("New Post Printed")
+    logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+
+    files = os.listdir()
+    # if profile_pic_path and profile_pic_path in files:
+    #     os.remove(profile_pic_path)
+    if post_image_path and post_image_path in files:
+        os.remove(post_image_path)
+    picDownload2 = False
+
