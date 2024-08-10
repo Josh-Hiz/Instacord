@@ -58,7 +58,7 @@ def run():
             self.last_post = None
             self.last_post_author = username
             self.start_time = ""+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" (EST)"
-            self.task = tasks.loop(minutes=20)(self.post_check_task)
+            self.task = tasks.loop(minutes=120)(self.post_check_task)
             self.task.before_loop(self.before_post_check_task)
             self.task.start()
             
@@ -195,7 +195,7 @@ def run():
             logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
 
 
-    @tasks.loop(minutes=20)
+    @tasks.loop(minutes=120)
     async def post_check_task():
 
         #global last_post, last_post_author, global_ctx, global_username, global_channel_id, global_role_id
@@ -223,7 +223,7 @@ def run():
         brief = "Prints the current last post of designated account without downloading/deleting. Images within embeds are temporary."
     )
     @has_permissions(ban_members=True)
-    async def lastpost_ND(ctx, username, channel_id: int, role_id:int, bot, logger):
+    async def lastpost_ND(ctx, username, channel_id: int, role_id:int):
         #global last_post_author, last_post
 
         last_post = await post_data_ND.lastpost(ctx, username, channel_id, role_id, bot, logger, last_post, last_post_author)
@@ -240,6 +240,20 @@ def run():
         global post_checkers
 
         post_checkers = await post_data_D.lastpost_downloadv(bot, logger, ctx, username, channel_id, role_id, post_checkers)
+
+
+    @bot.command(
+        brief = "Prints the current last post of designated account with downloading/deleting. Images within embed are permanent. If the channel/author used match a current post checker, it will overwrite that post checker. There will be no double post."
+    )
+    @has_permissions(ban_members=True)
+    async def lastpost_DMUL(ctx, username, channel_id: int, role_id: int, num_posts=1):
+        #global last_post_author, last_post
+        
+        global post_checkers
+
+        post_checkers = await post_data_D.lastpost_downloadv_m(bot, logger, ctx, username, channel_id, role_id, post_checkers, num_posts)
+
+    
 
     
     @bot.command(brief="Lists all running post checkers")
