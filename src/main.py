@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions
-from datetime import datetime
+from datetime import datetime, timedelta
 import post_data_D, post_data_ND
 from pretty_help import PrettyHelp, EmojiMenu
 
@@ -57,8 +57,10 @@ def run():
             self.role_id = role_id
             self.last_post = None
             self.last_post_author = username
+            self.check_interval = 120
             self.start_time = ""+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" (EST)"
-            self.task = tasks.loop(minutes=120)(self.post_check_task)
+            self.start_time_val = datetime.now()
+            self.task = tasks.loop(minutes=self.check_interval)(self.post_check_task)
             self.task.before_loop(self.before_post_check_task)
             self.task.start()
             
@@ -81,6 +83,10 @@ def run():
             self.task.stop()
             logger.info("Stopping post checker task. Task will run for one more iteration before being paused.")
             logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
+
+        def time_until_next_check(self):
+            next_check = self.start_time_val + timedelta(minutes=self.check_interval)
+            return next_check - datetime.now()
 
 
 
@@ -268,6 +274,16 @@ def run():
         else:
             await ctx.send("No post checkers are currently running.")
 
+
+    @bot.command(brief="Prints time until next check for a specific postchecker")
+    @has_permissions(ban_members=True)
+    async def time_postchecker(ctx, username: str, channel_id: int):
+        key = (ctx.guild.id, username, channel_id)
+        if key in post_checkers:
+            remaining_time = post_checkers[key].time_until_next_check()
+            await ctx.send(f"Time remaining until next post check: {remaining_time}")
+        else:
+            await ctx.send("There is no post checker running under the provided key.")
 
 
     @bot.command(

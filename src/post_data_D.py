@@ -125,8 +125,12 @@ async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_i
         await ctx.send(f"An error occurred: {e}")
 
 
-
-
+###
+###
+### NOT WORKING YET
+### CURRENTLY SKIPPING MOST RECENT POST
+###
+###
 async def lastpost_downloadv_m(bot, logger, ctx, username, channel_id: int, role_id: int, post_checkers, num_posts=1):
 
     picDownload, picDownload2 = False, False
