@@ -11,9 +11,6 @@ from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions
 from datetime import datetime
 
-private_server_id = 385825313323483146
-private_server_target_role_id = 385826570377625601
-
 
 async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_id: int, post_checkers):
 
@@ -318,8 +315,6 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
         picDownload, picDownload2 = False, False
 
         last_post_author = global_username
-
-        private_server_target_channel = bot.get_channel(385829067225825282)
 
         target_channel = bot.get_channel(global_channel_id)
 
