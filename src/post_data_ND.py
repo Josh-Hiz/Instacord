@@ -13,10 +13,6 @@ from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions
 from datetime import datetime
 
-private_server_id = 385825313323483146
-private_server_target_role_id = 385826570377625601
-
-
 
 async def lastpost(ctx, username, channel_id: int, role_id: int, bot, logger, last_post, last_post_author):
 
@@ -91,7 +87,6 @@ async def post_check(bot, logger, last_post, last_post_author, global_ctx, globa
 
         last_post_author = global_username
 
-        private_server_target_channel = bot.get_channel(385829067225825282)
 
         target_channel = bot.get_channel(global_channel_id)
 
@@ -146,10 +141,6 @@ async def post_check(bot, logger, last_post, last_post_author, global_ctx, globa
                         # get channel next
                         logger.info("New Post Found")
                         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-                        guild = bot.get_guild(private_server_id)
-                        if guild:
-                            role = guild.get_role(private_server_target_role_id)
-                            await private_server_target_channel.send(f" {role.mention} New post on {fullname}'s Instagram!", embed=e)
 
                         role2 = discord.utils.get(global_ctx.guild.roles, id=global_role_id)
 
@@ -166,8 +157,6 @@ async def post_check(bot, logger, last_post, last_post_author, global_ctx, globa
                         logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
                         return
 
-            #await private_server_target_channel.send(f"No unpinned posts found for {username}.")
             await logger.info(f"No unpinned posts found for {global_username}.\n")
         except Exception as e:
-            #await private_server_target_channel.send(f"An error occurred: {e}")
             await logger.error(f"An error occurred: {e}\n")
