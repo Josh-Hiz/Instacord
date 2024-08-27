@@ -12,7 +12,7 @@ from discord.ext.commands import has_permissions
 from datetime import datetime
 
 
-async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_id: int, post_checkers):
+async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_id: int | None, post_checkers):
 
     target_channel = bot.get_channel(channel_id)
 
@@ -91,10 +91,16 @@ async def lastpost_downloadv(bot, logger, ctx, username, channel_id: int, role_i
                 e.set_image(url="attachment://" + post_image_path)
                 e.set_footer(text=f"❤️ {likes} | 💬 {comments}")
                 e.set_author(name=username, icon_url = "attachment://" + profile_pic_path, url="https://www.instagram.com/" + username)
-                role = discord.utils.get(ctx.guild.roles, id=role_id)
-                logger.info("Manually sent last post")
-                logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
-                await target_channel.send(f" {role.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
+                if role_id != None:
+                    role = discord.utils.get(ctx.guild.roles, id=role_id)
+                    logger.info("Manually sent last post")
+                    logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+                    await target_channel.send(f" {role.mention} New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
+                else:
+                    logger.info("Manually sent last post")
+                    logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+                    await target_channel.send(f"New post on {fullname}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(post_image_path)])
+                
                     
                 files = os.listdir()
                 if profile_pic_path in files:
@@ -384,10 +390,16 @@ async def post_check_downloadv(bot, logger, last_post, last_post_author, global_
                             logger.info(f"Found {len(posts_to_print)} new post(s)")
                             logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
 
+                            logger.info("oops1")
+
                             last_post = posts_to_print[0].date
 
-                            for post in posts_to_print:
+                            logger.info("oops2")
+
+                            for post in reversed(posts_to_print):
                                 await print_post(post, profile_pic_path, global_ctx, global_username, global_channel_id, global_role_id, logger, L, bot, fullname)
+
+                            logger.info("oops3")
 
                             files = os.listdir()
                             if profile_pic_path and profile_pic_path in files:

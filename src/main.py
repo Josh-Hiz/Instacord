@@ -55,6 +55,7 @@ def run():
             self.check_interval = 120
             self.start_time = ""+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" (EST)"
             self.start_time_val = datetime.now()
+            self.prev_time_val = datetime.now()
             self.task = tasks.loop(minutes=self.check_interval)(self.post_check_task)
             self.task.before_loop(self.before_post_check_task)
             self.task.start()
@@ -63,6 +64,7 @@ def run():
             logger.info("Beginning post_check call")
             logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
             self.last_post = await post_data_D.post_check_downloadv(self.bot, logger, self.last_post, self.last_post_author, self.ctx, self.username, self.channel_id, self.role_id)
+            self.prev_time_val = datetime.now()
     
         async def before_post_check_task(self):
             logger.info("Waiting until bot is ready to begin post_check loop")
@@ -80,7 +82,7 @@ def run():
             logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
 
         def time_until_next_check(self):
-            next_check = self.start_time_val + timedelta(minutes=self.check_interval)
+            next_check = self.prev_time_val + timedelta(minutes=self.check_interval)
             return next_check - datetime.now()
 
 
@@ -235,8 +237,11 @@ def run():
         brief = "Prints the current last post of designated account with downloading/deleting. Images within embed are permanent. If the channel/author used match a current post checker, it will overwrite that post checker. There will be no double post."
     )
     @has_permissions(ban_members=True)
-    async def lastpost_D(ctx, username, channel_id: int, role_id: int):
+    async def lastpost_D(ctx, username, channel_id: int, role_id=None):
         #global last_post_author, last_post
+
+        if role_id != None:
+            role_id = int(role_id)
         
         global post_checkers
 
