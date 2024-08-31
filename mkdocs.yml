@@ -6,25 +6,31 @@ theme:
   name: material
   font:
     code: Fira Code
-  pallete:
+  palette:
+
+    # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
       toggle:
         icon: material/link
-        name: Switch to system preference
+        name: Switch to light mode
+
+    # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: default
+      scheme: default 
       primary: blue
       accent: orange
       toggle:
         icon: material/toggle-switch
-        name: Switch to light mode
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: black
       accent: orange
       toggle:
         icon: material/toggle-switch-off-outline
-        name: Switch to dark mode
+        name: Switch to system preference
   features:
     - content.code.select
     - navigation.footer
@@ -45,7 +51,7 @@ plugins:
       default_handler: python
       handlers:
         python:
-          paths: [src/]
+          paths: [src/*]
   - git-authors
   - glightbox
   - offline
@@ -54,6 +60,14 @@ plugins:
 
 markdown_extensions:
   - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.critic
   - pymdownx.caret
   - pymdownx.keys
