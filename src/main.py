@@ -30,6 +30,9 @@ post_checkers = {}
 # global_role_id = None
 
 
+start_time = datetime.now()
+
+
 class RoleNotFound(Exception):
     pass
 
@@ -280,6 +283,16 @@ def run():
             await ctx.send(f"Time remaining until next post check: {remaining_time}")
         else:
             await ctx.send("There is no post checker running under the provided key.")
+
+    @bot.command(brief="Gets uptime of the bot instance")
+    @has_permissions(ban_members=True)
+    async def uptime_checker(ctx):
+        global start_time
+
+        curr_time = datetime.now()
+
+        uptime = curr_time - start_time
+        await ctx.send(f"The uptime of the bot is {uptime}.")
 
     @bot.command(
         aliases=["p"],
