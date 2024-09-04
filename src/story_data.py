@@ -1,7 +1,8 @@
 import os
-import instaloader
-import discord
 from datetime import datetime
+
+import discord
+import instaloader
 
 ###
 ###
@@ -10,7 +11,7 @@ from datetime import datetime
 ###
 
 
-# 
+#
 # Print all current stories for a user
 #
 async def allstory(ctx, bot, logger, username: str, channel_id: int, role_id: int):
@@ -29,12 +30,12 @@ async def allstory(ctx, bot, logger, username: str, channel_id: int, role_id: in
         if picDownload == False:
             print("\n")
             logger.error("allstory: profile picture not downloaded")
-            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+            logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
             return
         else:
             print("\n")
             logger.info("allstory: profile picture successfully downloaded")
-            logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+            logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
         for file in os.listdir():
             if file.startswith(profile_pic_path):
                 profile_pic_path = file
@@ -53,12 +54,12 @@ async def allstory(ctx, bot, logger, username: str, channel_id: int, role_id: in
                     if picDownload2 == False:
                         print("\n")
                         logger.error("allstory: video thumbnail not downloaded")
-                        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+                        logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
                         return
                     else:
                         print("\n")
                         logger.info("allstory: video thumbnail successfully downloaded")
-                        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+                        logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
                     for file in os.listdir():
                         if file.startswith(image_path):
                             image_path = file
@@ -70,12 +71,12 @@ async def allstory(ctx, bot, logger, username: str, channel_id: int, role_id: in
                     if picDownload2 == False:
                         print("\n")
                         logger.error("allstory: story image not downloaded")
-                        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+                        logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
                         return
                     else:
                         print("\n")
                         logger.info("allstory: story image successfully downloaded")
-                        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+                        logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
                     for file in os.listdir():
                         if file.startswith(image_path):
                             image_path = file
@@ -84,20 +85,28 @@ async def allstory(ctx, bot, logger, username: str, channel_id: int, role_id: in
                 ### Print the story
 
                 e = discord.Embed(
-                    title = f"New Instagram story published on {item.date}",
-                    url = f"https://www.instagram.com/stories/{username}",
-                    color= 0xEF04D9,
-                    description = f"Story will expire at {item.expiring_utc} (UTC)"
+                    title=f"New Instagram story published on {item.date}",
+                    url=f"https://www.instagram.com/stories/{username}",
+                    color=0xEF04D9,
+                    description=f"Story will expire at {item.expiring_utc} (UTC)",
                 )
 
                 e.set_image(url=f"attachment://{image_path}")
-                e.set_author(name=username, icon_url = f"attachment://{profile_pic_path}", url=f"https://www.instagram.com/{username}")
+                e.set_author(
+                    name=username,
+                    icon_url=f"attachment://{profile_pic_path}",
+                    url=f"https://www.instagram.com/{username}",
+                )
 
                 target_channel = await bot.get_channel(channel_id)
                 role = discord.utils.get(ctx.guild.roles, id=role_id)
-                await target_channel.send(f"{role.mention} New story on {full_name}'s Instagram!", embed=e, files=[discord.File(profile_pic_path), discord.File(image_path)])
+                await target_channel.send(
+                    f"{role.mention} New story on {full_name}'s Instagram!",
+                    embed=e,
+                    files=[discord.File(profile_pic_path), discord.File(image_path)],
+                )
                 logger.info(f"Manually sent story from {username}")
-                logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+                logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
 
                 files = os.listdir()
                 if picDownload2 and image_path in files:
@@ -107,7 +116,7 @@ async def allstory(ctx, bot, logger, username: str, channel_id: int, role_id: in
             target_channel = bot.get_channel(channel_id)
             await target_channel.send(f"There are no current stories on {full_name}'s account.")
             logger.info(f"{username} has no current stories.")
-            logger.info("Time: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (EST)\n")
+            logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
 
         files = os.listdir()
         if picDownload and profile_pic_path in files:
@@ -120,5 +129,5 @@ async def allstory(ctx, bot, logger, username: str, channel_id: int, role_id: in
         if picDownload2 and image_path in files:
             os.remove(image_path)
         logger.error(f"An error occurred: {e}")
-        logger.info("Time: "+datetime.now().strftime('%Y-%m-%d %H:%M:%S')+ " (EST)\n")
+        logger.info("Time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (EST)\n")
         await ctx.send(f"An error occurred: {e}")

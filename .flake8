@@ -1,0 +1,27 @@
+[flake8]
+max-line-length = 200
+max-doc-length = 200
+exclude =
+    .cache/,
+    dist/,
+    .docs/,
+    .git/,
+    logs/,
+    .nox/,
+    __pycache__/,
+    site/,
+    .venv/
+statistics = True
+show_source = True
+max-complexity = 13
+extend-ignore = 
+    W601,
+    E201,
+    E202,
+    E203,
+    E211,
+    W503,
+    PT006,
+    PT018,
+    PT012,
+    PT011

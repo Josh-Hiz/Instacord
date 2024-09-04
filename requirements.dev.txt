@@ -1,0 +1,17 @@
+black>=24.8.0
+flake8>=7.1.1
+isort>=5.13.2
+mkdocs>=1.6.1
+mkdocs-autorefs
+mkdocs-gen-files
+mkdocs-get-deps
+mkdocs-git-authors-plugin
+mkdocs-glightbox
+mkdocs-macros-plugin
+mkdocs-material
+mkdocs-material-extensions
+mkdocs-rtd-dropdown
+mkdocstrings
+mkdocstrings-python
+mypy>=1.11.2
+nox>=2024.4.15
