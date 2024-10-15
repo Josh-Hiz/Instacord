@@ -250,6 +250,22 @@ def run():
         )
 
     @bot.command(
+        brief="Prints the current last post of designated account with downloading/deleting. Includes pinned messages. Images within embed are permanent. If the channel/author used match a current post checker, it will overwrite that post checker. There will be no double post."
+    )
+    @has_permissions(ban_members=True)
+    async def lastpost_DP(ctx, username, channel_id: int, role_id=None):
+        # global last_post_author, last_post
+
+        if role_id != None:
+            role_id = int(role_id)
+
+        global post_checkers
+
+        post_checkers = await post_data_D.lastpost_downloadv_pinned(
+            bot, logger, ctx, username, channel_id, role_id, post_checkers
+        )
+
+    @bot.command(
         brief="Prints the current last post of designated account with downloading/deleting. Images within embed are permanent. If the channel/author used match a current post checker, it will overwrite that post checker. There will be no double post."
     )
     @has_permissions(ban_members=True)
